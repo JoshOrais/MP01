@@ -12,24 +12,30 @@ public class S02MP01 extends JPanel implements Runnable{
 	public Thread mainThread;
 	
 	public static final int IDLE_MODE = 0,
-							DRAW_MODE = 1;
+							EDGE_MODE = 1,
+							VERTEX_MODE = 2;
 	private int current_mode = IDLE_MODE;
 	
 	private Image dbImage = null;
-	private Graphics dbg;
+	private Graphics2D dbg;
 	
 	private BufferedInput bufferedInput = null;
 	
-	private Point lastInput;
+	private VertexObject activeVertex = null;
+	private Graph graph = new Graph();
 	
-	ToggleButton button_a = new ToggleButton(500, 500, 20, 20); 	
 	
-	public void render(Graphics G) {
+	ToggleButton pbutton = new ToggleButton(500, 500, 20, 20); 	
+	ToggleButton vbutton = new ToggleButton(530, 500, 20, 20); 	
+	ToggleButton ebutton = new ToggleButton(560, 500, 20, 20); 	
+	ToggleButton dbutton = new ToggleButton(590, 500, 20, 20); 	
+	
+	ToggleButton[] buttons = { vbutton, ebutton, pbutton, dbutton };
+	
+	public void render(Graphics2D G) {
 		G.setColor(Color.green);
 		Point a = this.getMousePosition();
 		
-		if (current_mode == DRAW_MODE && a != null) 
-			G.drawLine(lastInput.x, lastInput.y, a.x, a.y);
 		G.setColor(Color.red);
 		if (a != null) {
 			G.drawLine(0, 0, a.x, a.y);
@@ -38,7 +44,24 @@ public class S02MP01 extends JPanel implements Runnable{
 			G.drawLine(800, 800, a.x, a.y);
 		}
 		
-		button_a.render(G);	
+		if (activeVertex != null && a != null) 
+			G.drawLine(activeVertex.getX(), activeVertex.getY(), a.x, a.y);
+		
+		for (Vertex v : graph.getVertices()) {
+			if (v != null) {
+				v.getObject().render(G);
+				for (Edge e : v.getEdges()) {
+					int to = e.vertex;
+					VertexObject oto = graph.vertex(to).getObject();
+					
+					G.drawLine(v.getObject().getX(), v.getObject().getY(), oto.getX(), oto.getY());
+				}
+			}
+		}
+		
+		for (ToggleButton b : buttons) {
+			b.render(G);
+		}
 	}
 	
 	public void update() {
@@ -52,7 +75,8 @@ public class S02MP01 extends JPanel implements Runnable{
 				System.out.println("ERROR: Double Buffering Image is null!");
 				return;
 			}
-			dbg = dbImage.getGraphics();
+			dbg = (Graphics2D)dbImage.getGraphics();
+			dbg.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		}
 		dbg.setColor(new Color( 0, 0, 0, 255));
 		dbg.fillRect(0,0,800, 800);
@@ -78,15 +102,41 @@ public class S02MP01 extends JPanel implements Runnable{
 	public void input() {
 		if (bufferedInput == null) return;
 		
-		button_a.click(bufferedInput.x_pos , bufferedInput.y_pos);
-		
-		if (current_mode == IDLE_MODE) {
-			lastInput = new Point(bufferedInput.x_pos , bufferedInput.y_pos);
-			current_mode = DRAW_MODE;
+		for (ToggleButton button : buttons) {
+			if ( button.click(bufferedInput.x_pos , bufferedInput.y_pos)) {
+				
+				if (!button.isToggled()) {
+					button.set(true);
+					for (ToggleButton other: buttons) {
+						if (other != button) other.set(false);
+					}
+				
+					if (vbutton.isToggled()) current_mode = VERTEX_MODE;
+					else if (ebutton.isToggled()) current_mode = EDGE_MODE;
+					else current_mode = IDLE_MODE;
+				}
+				
+				if (activeVertex != null) activeVertex = null;
+				bufferedInput = null;
+				return;
+			}
 		}
-		else {
-			current_mode = IDLE_MODE;
-			lastInput = null;
+		
+		if (current_mode == VERTEX_MODE)
+			graph.addVertex(new VertexObject(bufferedInput.x_pos , bufferedInput.y_pos));
+		
+		if (current_mode == EDGE_MODE) {
+				for (Vertex v : graph.getVertices()) {
+					if (v != null) {
+						if (v.getObject().click(bufferedInput.x_pos , bufferedInput.y_pos)) {
+							if (activeVertex == null) activeVertex = v.getObject();
+							else {
+								graph.vertex(activeVertex.getVertex()).addEdge(v.getObject().getVertex(), 1);
+								activeVertex = null;
+							}
+						}
+					}
+				}
 		}
 		
 		bufferedInput = null;
@@ -109,6 +159,7 @@ public class S02MP01 extends JPanel implements Runnable{
 	
 	@Override
 	public void run() {
+		pbutton.set(true);
 		while(true) {
 			try {
 				update();

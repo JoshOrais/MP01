@@ -1,0 +1,26 @@
+package datastructures;
+
+import java.util.ArrayList;
+
+public class VertexGraph {
+	private String name;
+	private ArrayList<Edge> edges;
+
+	public VertexGraph(String name) {
+		edges = new ArrayList<Edge>();
+		this.name = name;
+	}
+	
+	public void addEdge(VertexGraph v) {
+	}
+	
+	public void removeEdge(VertexGraph v) {
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public ArrayList<VertexGraph> getAdjacentVertices() {
+	}
+}
