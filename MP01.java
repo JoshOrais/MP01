@@ -1,5 +1,10 @@
 import javax.swing.JFrame;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.io.File;
 import datastructures.graph.DirectedWeightedGraph;
 
 public class MP01 {
@@ -7,42 +12,39 @@ public class MP01 {
 
 	public static void main(String[] args) {
 		JFrame frame = new JFrame("MP");
-		
-		DirectedWeightedGraph graph = new DirectedWeightedGraph();
-		try {
-			graph.addVertex("1");
-			graph.addVertex("2");
-			graph.addVertex("3");
-			graph.addVertex("4");
-			graph.addVertex("5");
-			graph.addVertex("6");
-			graph.addVertex("7");
-			graph.addVertex("8");
-			graph.addVertex("9");
-			graph.addEdge("1","2");
-			graph.addEdge("2","3");
-			graph.addEdge("3","4");
-			graph.addEdge("4","5");
-			graph.addEdge("5","6");
-			graph.addEdge("6","7");
-			graph.addEdge("7","8");
-			graph.addEdge("8","9");
-			graph.addEdge("9","1");
-			graph.addEdge("9","2");
-			graph.addEdge("9","3");
-			graph.addEdge("9","4");
-			graph.addEdge("9","5");
-			graph.addEdge("9","6");
-			graph.addEdge("9","7");
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		
 		frame.setLayout(null);
-		GraphLayout a = new GraphLayout(graph);
+		GraphLayout a = new GraphLayout(new DirectedWeightedGraph());
+		//try {
+			//DirectedWeightedGraph g = new GraphReader(new File("test.txt")).getDirectedWeightedGraph();
+			//a.setGraph(g);
+		//}catch(Exception e) {
+		//	e.printStackTrace();
+		//}
 		frame.add(a);
 		a.setBounds(0, 0, 500, 500);
+		JButton b = new JButton("INPUT");
+		frame.add(b);
+		b.setBounds(500, 0, 120, 40);
+		JFileChooser fc = new JFileChooser();
+		
+		b.addActionListener(
+			new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					int returnVal = fc.showOpenDialog(null);
+
+					if (returnVal == JFileChooser.APPROVE_OPTION) {
+						try {
+							File file = fc.getSelectedFile();
+							DirectedWeightedGraph g = new GraphReader(file).getDirectedWeightedGraph();
+							a.setGraph(g);
+						} catch (Exception ex) {
+							System.out.println("SOMETHING HAPPENED");
+						}
+							
+					}
+				}
+			}
+		);
 		
 		frame.setPreferredSize(new Dimension(480,480));
 		frame.setSize(600,600);

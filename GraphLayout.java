@@ -1,6 +1,8 @@
 import javax.swing.JPanel;
 import java.awt.Graphics;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import datastructures.graph.DirectedWeightedGraph;
 import java.awt.event.MouseEvent;
@@ -11,39 +13,32 @@ import java.awt.event.MouseAdapter;
 public class GraphLayout extends JPanel {
 	private DirectedWeightedGraph graph;
 	private ArrayList<Vertex> vertices = new ArrayList<Vertex>();
-	private final double K = 0.57f;
+	private final double K = 0.21f;
 	private final double DIST = 60.f;
 	private final int MAX_ITERATIONS = 10000;
 	private final float PADDINGPERCENT = 0.05f;
-	private final int CIRCLE_SIZE = 20;
+	private final int CIRCLE_SIZE = 30;
 	private final Color CIRCLE_COLOR = Color.green;
 	private final Color LINE_COLOR = Color.black;
+	private final Font FONT = new Font("calibri", Font.PLAIN, CIRCLE_SIZE / 2);
 	
 	public GraphLayout(DirectedWeightedGraph g) {
 		super();
-		addMouseListener( new MouseAdapter() {		
-			public void mouseClicked(MouseEvent e) { 
-				repaint();
-			}  
-			public void mouseEntered(MouseEvent e) {}  
-			public void mouseExited(MouseEvent e) {}  
-			public void mousePressed(MouseEvent e) {} 
-			public void mouseReleased(MouseEvent e) {}
-		});
 		graph = g;
 		init();
 		
 	}
 	
 	public void init() {
+		vertices = new ArrayList<Vertex>();
 		String[] vertexnames = graph.getVertices();
-		int x = 200;
-		int y = 200;
-		int even = 1;
+		float angle = 0;
+		float angle_increment = 360.f / (vertexnames.length);
 		for (String name : vertexnames) {
-			this.vertices.add(new Vertex(name, x, y + even * 10));
-			x += 10;
-			even *= -1;
+			int x = (int)(DIST * Math.cos(Math.toRadians(angle)));
+			int y = (int)(DIST * Math.sin(Math.toRadians(angle)));
+			this.vertices.add(new Vertex(name, x, y));
+			angle += angle_increment;
 		}
 		
 		
@@ -61,13 +56,15 @@ public class GraphLayout extends JPanel {
 				double dist = Math.sqrt(dx * dx + dy * dy);
 				double forcex, forcey;
 				if (graph.isAdjacent(v.id, u.id) || graph.isAdjacent(u.id, v.id)) {
+					//hooke's law
 					double force = K * (dist - DIST);
 					if (force > 100.) force = 100.;
 					forcex = dx * (force / dist);
 					forcey = dy * (force / dist);
 				}
 				else {
-					double force = -K * 1.8 *(DIST / dist);
+					//coulomb;s law?
+					double force = -(1000.f /(dist));
 					forcex = dx * (force / dist);
 					forcey = dy * (force / dist);
 				}
@@ -109,6 +106,11 @@ public class GraphLayout extends JPanel {
 		int padxend = width - paddingx;
 		int padyend = height - paddingy;
 		
+		g.setColor(Color.black);
+		g.fillRect(0, 0, width, height);
+		g.setColor(Color.white);
+		g.fillRect(5, 5, width - 10, height - 10);
+		
 		for (Vertex v : vertices) {
 			if (first) {
 				first = false;
@@ -133,9 +135,27 @@ public class GraphLayout extends JPanel {
 					g.drawLine(x, y, ux, uy); 
 				}
 			}
+		}
+		
+		
+		for (Vertex v : vertices) {
+			int x = paddingx + map(v.x, minx, maxx, paddingx, padxend);
+			int y = paddingy + map(v.y, miny, maxy, paddingy, padyend);
 			g.setColor(CIRCLE_COLOR);
 			g.fillOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
+			g.setColor(LINE_COLOR);
+			g.drawOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
+			g.setFont(FONT);
+			FontMetrics fm = g.getFontMetrics(FONT);
+			int w2 = fm.stringWidth(v.id) / 2;
+			g.drawString(v.id, x - w2 ,y + CIRCLE_SIZE / 4);
 		}
+	}
+	
+	public void setGraph(DirectedWeightedGraph g) {
+		this.graph = g;
+		init();
+		repaint();
 	}
 	
 	public class Vertex {

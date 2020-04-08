@@ -1,0 +1,30 @@
+#This is a graph file for the purposes of cmsc-123 or cmsc-121 i forget
+#Lines that have a '#' as the first character are comments and should be ignored
+VERTICES:
+#lines after "VERTICES:" are space separated names for vertices
+a
+quick
+brown fox
+jumps
+over
+the big fat wolf
+#'the', 'big', 'fat', and 'wolf' should be different vertices
+EDGES:
+#every line after "EDGES:" is a single edge
+# format for edge is [SOURCE_VERTEX] [DESTINATION_VERTEX] [WEIGHT]
+a quick 12
+quick brown 2
+brown fox 4
+fox jumps 5
+jumps over 9
+over the 14
+the big 1
+big fat 20
+fat wolf 11
+wolf over 8
+fox wolf 13
+a fat 7
+#last night
+#i had a dream about you
+#in this dream
+#im 
