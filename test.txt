@@ -23,6 +23,7 @@ big fat 20
 fat wolf 11
 wolf over 8
 fox wolf 13
+wolf a 12
 a fat 7
 #last night
 #i had a dream about you

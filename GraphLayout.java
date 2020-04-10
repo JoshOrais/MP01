@@ -13,14 +13,20 @@ import java.awt.event.MouseAdapter;
 public class GraphLayout extends JPanel {
 	private DirectedWeightedGraph graph;
 	private ArrayList<Vertex> vertices = new ArrayList<Vertex>();
-	private final double K = 0.21f;
-	private final double DIST = 60.f;
-	private final int MAX_ITERATIONS = 10000;
-	private final float PADDINGPERCENT = 0.05f;
-	private final int CIRCLE_SIZE = 30;
-	private final Color CIRCLE_COLOR = Color.green;
-	private final Color LINE_COLOR = Color.black;
-	private final Font FONT = new Font("calibri", Font.PLAIN, CIRCLE_SIZE / 2);
+	private Vertex start = null;
+	private Vertex end = null;
+	private String[] path = null;
+	
+	public static final double K = 0.21f;
+	public static final double DIST = 60.f;
+	public static final int MAX_ITERATIONS = 10000;
+	public static final float PADDINGPERCENT = 0.05f;
+	public static final int CIRCLE_SIZE = 30;
+	public static final Color CIRCLE_COLOR = Color.green;
+	public static final Color LINE_COLOR = Color.black;
+	public static final Color HIGHLIGHT_COLOR = Color.red;
+	public static final Color HIGHLIGHT_CIRCLE_COLOR = Color.yellow;
+	public static final Font FONT = new Font("calibri", Font.BOLD, CIRCLE_SIZE / 2);
 	
 	public GraphLayout(DirectedWeightedGraph g) {
 		super();
@@ -87,10 +93,32 @@ public class GraphLayout extends JPanel {
 	
 	//maps x from numeric range [fromstart, fromend] to [tostart, toend]
 	private int map(int x, int fromstart, int fromend, int tostart, int toend) {
-		
 		return (int)((float)((toend - tostart) * (x - fromstart)) / (float)(fromend - fromstart)); // something something precision
 	}
 	
+	public float[] getEuclidean(String[] names, String end) {
+		float[] ret = new float[names.length];
+		Vertex fin = null;
+		for (Vertex v: vertices) { 
+			if (v.id.equals(end)) {
+				fin = v;
+				break;
+			}
+		}
+		
+		if (fin == null) return null;
+		
+		for (int i = 0; i < names.length; ++i) {
+			String name = names[i];
+			for (Vertex v: vertices) {
+				if (v.id.equals(name)) {
+					ret[i] = (float)Math.sqrt((v.x - fin.x)*(v.x - fin.x) + (v.y - fin.y)*(v.y - fin.y));
+					System.out.println(names[i] + "," + ret[i]);
+				}
+			}
+		}
+		return ret;
+	}
 	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -127,9 +155,12 @@ public class GraphLayout extends JPanel {
 		for (Vertex v : vertices) {
 			int x = paddingx + map(v.x, minx, maxx, paddingx, padxend);
 			int y = paddingy + map(v.y, miny, maxy, paddingy, padyend);
-			g.setColor(LINE_COLOR);
 			for (Vertex u : vertices) {
 				if (graph.isAdjacent(v.id, u.id)) {
+					if (path(u) && path(v))
+						g.setColor(HIGHLIGHT_COLOR);
+					else
+						g.setColor(LINE_COLOR);
 					int ux = paddingx + map(u.x, minx, maxx, paddingx, padxend);
 					int uy = paddingy + map(u.y, miny, maxy, paddingy, padyend);
 					g.drawLine(x, y, ux, uy); 
@@ -138,17 +169,42 @@ public class GraphLayout extends JPanel {
 		}
 		
 		
+		g.setFont(FONT);
+		FontMetrics fm = g.getFontMetrics(FONT);
 		for (Vertex v : vertices) {
 			int x = paddingx + map(v.x, minx, maxx, paddingx, padxend);
 			int y = paddingy + map(v.y, miny, maxy, paddingy, padyend);
-			g.setColor(CIRCLE_COLOR);
+			if (highlight(v))
+				g.setColor(HIGHLIGHT_CIRCLE_COLOR);
+			else
+				g.setColor(CIRCLE_COLOR);
 			g.fillOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
 			g.setColor(LINE_COLOR);
 			g.drawOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
-			g.setFont(FONT);
-			FontMetrics fm = g.getFontMetrics(FONT);
 			int w2 = fm.stringWidth(v.id) / 2;
 			g.drawString(v.id, x - w2 ,y + CIRCLE_SIZE / 4);
+		}
+		
+		if (start != null) {
+			int x = paddingx + map(start.x, minx, maxx, paddingx, padxend);
+			int y = paddingy + map(start.y, miny, maxy, paddingy, padyend);
+			g.setColor(HIGHLIGHT_COLOR);
+			g.drawOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
+			int w = fm.charWidth('S');
+			int sx = x > (maxx - minx) / 2 ? x - w - CIRCLE_SIZE / 2 : x + w + CIRCLE_SIZE / 2;
+			int sy = x > (maxy - miny) / 2 ? y - CIRCLE_SIZE / 2 : y + CIRCLE_SIZE;
+			g.drawString("S", sx, sy);
+		}
+		
+		if (end != null) {
+			int x = paddingx + map(end.x, minx, maxx, paddingx, padxend);
+			int y = paddingy + map(end.y, miny, maxy, paddingy, padyend);
+			g.setColor(HIGHLIGHT_COLOR);
+			g.drawOval(x - CIRCLE_SIZE / 2 ,y - CIRCLE_SIZE / 2, CIRCLE_SIZE, CIRCLE_SIZE);
+			int w = fm.charWidth('D');
+			int sx = x > (maxx - minx) / 2 ? x - w - CIRCLE_SIZE / 2 : x + w + CIRCLE_SIZE / 2;
+			int sy = y > (maxy - miny) / 2 ? y - CIRCLE_SIZE / 2 : y + CIRCLE_SIZE;
+			g.drawString("D", sx, sy);
 		}
 	}
 	
@@ -156,6 +212,46 @@ public class GraphLayout extends JPanel {
 		this.graph = g;
 		init();
 		repaint();
+	}
+	
+	private Vertex getVertex(String name) {
+		for (Vertex v : vertices) {
+			if (v.id.equals(name)) return v;
+		}
+		return null;
+	}
+	
+	private boolean highlight(Vertex v) {
+		if (v == start || v == end) return true;
+		if (path(v)) return true;
+		return false;
+	}
+	
+	private boolean path(Vertex v) {
+		if (this.path == null) return false;
+		for (int i = 0; i < path.length; ++i) {
+			if (v.id.equals(path[i])) return true;
+		}
+		return false;
+	}
+	
+	public void path(String[] path) {
+		this.path = path;
+		repaint();
+	}
+	
+	public boolean setStartVertex(String vertexname) {
+		start = getVertex(vertexname);
+		repaint();
+		if (start == null) return false;
+		return true;
+	}
+	
+	public boolean setDestVertex(String vertexname) {
+		end = getVertex(vertexname);
+		repaint();
+		if (end == null) return false;
+		return true;
 	}
 	
 	public class Vertex {

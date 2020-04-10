@@ -29,7 +29,7 @@ public class DirectedWeightedGraph extends WeightedGraph{
 		String[] adjacents = new String[current.connectedEdges.size()];
 		
 		for (int  i = 0; i < adjacents.length; ++i) {
-			adjacents[i] = current.connectedEdges.get(i).getNameAndWeight();
+			adjacents[i] = current.connectedEdges.get(i).vertex.name;
 		}
 		
 		return adjacents;
