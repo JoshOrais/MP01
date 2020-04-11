@@ -1,7 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import datastructures.graph.DirectedWeightedGraph;
+import datastructures.graph.UndirectedWeightedGraph;
 
 public class GraphReader {
 	private File file;
@@ -10,9 +10,9 @@ public class GraphReader {
 		this.file = f;
 	}
 	
-	public DirectedWeightedGraph getDirectedWeightedGraph() throws Exception{
+	public UndirectedWeightedGraph getDirectedWeightedGraph() throws Exception{
 		BufferedReader br = new BufferedReader(new FileReader(file));
-		DirectedWeightedGraph ret = new DirectedWeightedGraph();
+		UndirectedWeightedGraph ret = new UndirectedWeightedGraph();
 		boolean v_state = false;
 		boolean e_state = false;
 		
@@ -22,6 +22,7 @@ public class GraphReader {
 			
 			if (curr.trim().equals("VERTICES:")) {
 				v_state = true;
+				System.out.println("found ver");
 				continue;
 			}
 			

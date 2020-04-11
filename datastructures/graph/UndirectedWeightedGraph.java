@@ -6,6 +6,15 @@ import java.util.ArrayList;
 public class UndirectedWeightedGraph extends WeightedGraph{
 	private ArrayList<Vertex> vertices = new ArrayList<Vertex>();
 	
+	
+	public int getEdgeWeight(String v_a, String v_b) {
+		Vertex current = getVertexByName(v_a);
+		for (Edge e : current.connectedEdges) {
+			if (v_b.equals(e.vertex.name)) return e.weight;
+		}
+		return 0;
+	}
+	
 	private Vertex getVertexByName(String name) {
 		for (Vertex v : vertices){
 			if (v.name.equals(name)) return v;
@@ -29,7 +38,7 @@ public class UndirectedWeightedGraph extends WeightedGraph{
 		String[] adjacents = new String[current.connectedEdges.size()];
 		
 		for (int  i = 0; i < adjacents.length; ++i) {
-			adjacents[i] = current.connectedEdges.get(i).getNameAndWeight();
+			adjacents[i] = current.connectedEdges.get(i).vertex.name;
 		}
 		
 		return adjacents;

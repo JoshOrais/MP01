@@ -7,7 +7,7 @@ quick
 brown fox
 jumps
 over
-the big fat wolf
+the big fat wolf wee
 #'the', 'big', 'fat', and 'wolf' should be different vertices
 EDGES:
 #every line after "EDGES:" is a single edge
@@ -25,7 +25,9 @@ wolf over 8
 fox wolf 13
 wolf a 12
 a fat 7
+a wee 102
+wee wolf 50
 #last night
 #i had a dream about you
 #in this dream
-#im 
+#im dancing right beside you

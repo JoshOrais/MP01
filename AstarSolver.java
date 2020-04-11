@@ -1,8 +1,8 @@
 import java.util.ArrayList;
-import datastructures.graph.DirectedWeightedGraph;
+import datastructures.graph.UndirectedWeightedGraph;
 
 public class AstarSolver {
-	private DirectedWeightedGraph graph;
+	private UndirectedWeightedGraph graph;
 	private float[] FCosts;
 	private float[] GCosts;
 	private float[] heuristics = null;
@@ -13,8 +13,18 @@ public class AstarSolver {
 	private String start = null, end = null, last = null;
 	private boolean done = true;
 	private boolean found = false;
+	private String[] work_array = null;
+	private String[] highlighted = null;
+	public static final int NULL_STEP = -1,
+							FIND_LEAST_FCOST = 0,
+							GET_ADJACENT_VERTICES = 1,
+							UPDATE_COST = 2,
+							DONE = 3,
+							FAIL = 4;
+	private int step = NULL_STEP;
+	private int cursor = 0;
 	
-	public AstarSolver(DirectedWeightedGraph g) {
+	public AstarSolver(UndirectedWeightedGraph g) {
 		this.graph = g;
 		
 		names = graph.getVertices();
@@ -56,72 +66,87 @@ public class AstarSolver {
 		done = false;
 		found = false;
 		last = null;
+		step = FIND_LEAST_FCOST;
 	}
 	
 	public boolean setHeuristics(float[] heuristics) {
 		if (!done)  {
-			System.out.println("wadsad");
 			return false;
 		}
 		if (heuristics.length != graph.getVertices().length) {
-			System.out.println("WHATASDAD");
 			return false;
 		}
 		this.heuristics = heuristics;
 		return true;
 	}
 	
-	public float[] getHeuristics() {
-		return heuristics;
-	}
-	
-	public String[] getNames() {
-		return names;
-	}
-	
 	public void step() {
 		if (done) return;
 		
-		if (openset.size() == 0) {
-			done = true;
-			found = false;
-			return;
-		}
-		
-		String current = null;
-		float least = Float.POSITIVE_INFINITY;
-		for (String v : openset) {
-			if (FCosts[ix(v)] < least) {
-				current = v;
-				least = FCosts[ix(v)];
+		if (step == FIND_LEAST_FCOST) {
+			String current = null;
+			float least = Float.POSITIVE_INFINITY;
+			
+			if (openset.size() == 0) {
+				done = true;
+				found = false;
+				step = FAIL;
+				return;
 			}
-		}
-		this.last = current;
+			
+			for (String v : openset) {
+				if (FCosts[ix(v)] < least) {
+					current = v;
+					least = FCosts[ix(v)];
+				}
+			}
+			this.last = current;
 		
-		if (current.equals(end)) {
-			found = true;
-			done = true;
+			if (current.equals(end)) {
+				found = true;
+				done = true;
+				step = DONE;
+				return;
+			}
+		
+			closedset.add(current);
+			openset.remove(current);
+			
+			step = GET_ADJACENT_VERTICES;
+			String[] n = {last};
+			highlighted = n;
 			return;
 		}
 		
-		closedset.add(current);
-		openset.remove(current);
-		System.out.println(last);
+		if (step == GET_ADJACENT_VERTICES) {
+			work_array = graph.getAdjacentVertices(last);
+			highlighted = graph.getAdjacentVertices(last);
+			step = UPDATE_COST;
+			return;
+		}
 		
-		for (String a : graph.getAdjacentVertices(current)) {
-			float tentative = GCosts[ix(current)] + graph.getEdgeWeight(current, a);
+		if (step == UPDATE_COST) {
+			
+			if (cursor == work_array.length) {
+				cursor = 0;
+				step = FIND_LEAST_FCOST;
+				highlighted = null;
+				return;
+			}
+			
+			String a = work_array[cursor++];
+			String[] n = {a};
+			highlighted = n;
+			
+			float tentative = GCosts[ix(last)] + graph.getEdgeWeight(last, a);
 			if (tentative < GCosts[ix(a)]) {
-				path[ix(a)] = ix(current);
+				path[ix(a)] = ix(last);
 				GCosts[ix(a)] = tentative;
 				FCosts[ix(a)] = GCosts[ix(a)] + heuristics[ix(a)];
 				if (!closedset.contains(a))
 					openset.add(a);
-				else 
-					System.out.println("what happened");
 			}
 		}
-		System.out.println(openset.toString());
-		
 	}
 	
 	public String[] getOpenset() {
@@ -140,6 +165,47 @@ public class AstarSolver {
 		return ret;
 	}
 	
+	public int getCurrentStep() {
+		return step;
+	}
+	
+	public String[] getHighlighted() {
+		return highlighted;
+	}
+	
+	
+	public float[] getFCosts() {
+		return FCosts;
+	}
+	
+	public float[] getGCosts() {
+		return GCosts;
+	}
+	
+	public float[] getHeuristics() {
+		return heuristics;
+	}
+	
+	public String[] getNames() {
+		return names;
+	}
+	
+	public String getLast() {
+		return last;
+	}
+	
+	public boolean isDone() {
+		return done;
+	}
+	
+	public float getCurrentCost() {
+		for (int i = 0; i < names.length; ++i) {
+			if (last.equals(names[i]))
+				return GCosts[i];
+		}
+		
+		return 0.f;
+	}
 	
 	public String[] getPath() {
 		if (last == null) return null;
